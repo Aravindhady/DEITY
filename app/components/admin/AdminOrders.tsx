@@ -77,7 +77,7 @@ export default function AdminOrders() {
         toast.success('Order updated successfully');
         // Clear cache and refetch
         removeCachedItem('orders');
-        await fetchOrders();
+        fetchOrders();
       }
     } catch (error) {
       console.error('Error updating order:', error);
