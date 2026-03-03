@@ -31,37 +31,37 @@ export default function AdminOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchOrders = async () => {
+    // Try to get cached data first
+    const cachedOrders = getCachedData<Order[]>('orders');
+    
+    if (cachedOrders) {
+      console.log('Loading orders from cache');
+      setOrders(cachedOrders);
+      setLoading(false);
+      return;
+    }
+
+    console.log('Fetching orders from API...');
+    try {
+      const response = await fetch('/api/admin/orders');
+      if (response.ok) {
+        const data = await response.json();
+        setOrders(data);
+        // Cache the data
+        setCachedData('orders', data);
+      } else if (response.status === 401 || response.status === 403) {
+        // Redirect to login if unauthorized
+        window.location.href = '/login';
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchOrders = async () => {
-      // Try to get cached data first
-      const cachedOrders = getCachedData<Order[]>('orders');
-      
-      if (cachedOrders) {
-        console.log('Loading orders from cache');
-        setOrders(cachedOrders);
-        setLoading(false);
-        return;
-      }
-
-      console.log('Fetching orders from API...');
-      try {
-        const response = await fetch('/api/admin/orders');
-        if (response.ok) {
-          const data = await response.json();
-          setOrders(data);
-          // Cache the data
-          setCachedData('orders', data);
-        } else if (response.status === 401 || response.status === 403) {
-          // Redirect to login if unauthorized
-          window.location.href = '/login';
-        }
-      } catch (error) {
-        console.error('Error fetching orders:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchOrders();
   }, []);
 
@@ -77,7 +77,7 @@ export default function AdminOrders() {
         toast.success('Order updated successfully');
         // Clear cache and refetch
         removeCachedItem('orders');
-        fetchOrders();
+        await fetchOrders();
       }
     } catch (error) {
       console.error('Error updating order:', error);
